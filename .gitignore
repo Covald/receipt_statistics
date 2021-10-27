@@ -1,0 +1,64 @@
+### Services root .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IntelliJ project files
+.idea
+out
+gen
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Temp/local development
+temp/
+services-files/configs/test_config/
+cover
+coverage.xml
+.coverage
+Makefile
+
+# Local editor
+.vim
+.DS_Store
+.editorconfig
+
+# Virtualenv
+.env
+.venv
+venv
+venv3.6
+test_venv
+.test_venv
+.env_tmp
+version.env
+
+# Temp/local
+temp
+_local
+tests/develop.py
+
+# Build/Dist
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+local_settings.py
+
+db.sqlite3
+/docker-compose.yml
+/docker-compose.override.yml
+
+.mypy_cache
+site
+

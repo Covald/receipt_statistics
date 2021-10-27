@@ -1,0 +1,72 @@
+version: "3.7"
+
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-file: "5"
+    max-size: "10m"
+
+
+volumes:
+  prometheus-metrics:
+    name: credit_robot_ru_prometheus_metrics
+
+
+services:
+  logstash:
+    image: "gitlab.rnd.lime-zaim.ru:5000/credit-robot/credit_robot_ru/logstash:7.9.2"
+    environment:
+      - "LS_JAVA_OPTS=-Xmx256m -Xms256m"
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./logstash/config/ca.crt:/etc/logstash/config/certs/ca.crt:ro
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+    logging: *default-logging
+    restart: "${DOCKER_RESTART:-no}"
+    env_file:
+      - ../.env
+
+
+  database:
+    ports:
+      - "${DOCKER_EXPOSE_PORT_DATABASE:-5432}:5432"
+
+  rabbitmq:
+    ports:
+      - "${DOCKER_EXPOSE_PORT_RABBITMQ_MANAGEMENT:-15672}:15672"
+
+  server:
+    ports:
+      - "${DOCKER_EXPOSE_PORT_SERVER:-8000}:8000"
+    command: python -Wd manage.py runserver 0.0.0.0:8000
+    volumes:
+      - prometheus-metrics:/code/prometheus_metrics
+    depends_on:
+      - rabbitmq
+      - logstash
+
+  worker:
+    image: "gitlab.rnd.lime-zaim.ru:5000/credit-robot/credit_robot_ru:dev"
+    user: web:web
+    build:
+      target: development_build
+      context: ..
+      dockerfile: ./docker/django/Dockerfile
+      args:
+        DJANGO_ENV: development
+      cache_from:
+        - "gitlab.rnd.lime-zaim.ru:5000/credit-robot/credit_robot_ru:dev"
+        - "gitlab.rnd.lime-zaim.ru:5000/credit-robot/credit_robot_ru:latest"
+        - "*"
+    command: python -Wd manage.py rundramatiq --processes 1 --threads 1
+    volumes:
+      - prometheus-metrics:/code/prometheus_metrics
+    depends_on:
+      - server
+      - logstash
+      - rabbitmq
+    logging: *default-logging
+    restart: "${DOCKER_RESTART:-no}"
+    env_file:
+      - ../.env

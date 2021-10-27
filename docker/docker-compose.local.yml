@@ -1,0 +1,44 @@
+version: "3.7"
+
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-file: "5"
+    max-size: "10m"
+
+
+services:
+  database:
+    image: "postgres:12.4-alpine"
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=credit_robot_ru
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - /var/lib/postgresql/data
+    logging: *default-logging
+    restart: "${DOCKER_RESTART:-no}"
+    env_file:
+      - .env
+
+  rabbitmq:
+    image: rabbitmq:3.7-management-alpine
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - /var/lib/rabbitmq
+    logging: *default-logging
+    restart: "${DOCKER_RESTART:-no}"
+    env_file:
+      - .env
+
+  redis:
+    image: redis:6.2.5
+    ports:
+      - "6379:6379"

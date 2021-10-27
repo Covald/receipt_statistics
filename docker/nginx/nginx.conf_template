@@ -1,0 +1,45 @@
+upstream server {
+    server server:8000;
+}
+
+upstream worker {
+    server worker:9191;
+}
+
+server {
+    listen       80;
+    server_name  localhost;
+
+    charset utf-8;
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+
+    location /static {
+        alias /static;
+    }
+
+    location /media {
+        alias /media;
+    }
+
+    location / {
+        proxy_read_timeout 60s;
+        proxy_connect_timeout 60s;
+        proxy_pass http://server;
+    }
+}
+
+server {
+    listen       9191;
+    server_name  localhost;
+
+    charset utf-8;
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+
+    location / {
+        proxy_read_timeout 60s;
+        proxy_connect_timeout 60s;
+        proxy_pass http://worker;
+    }
+}
